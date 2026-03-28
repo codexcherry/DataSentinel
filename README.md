@@ -4,22 +4,6 @@ A full-stack Django web application for automated data quality analysis, intelli
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Data Pipeline Workflow](#data-pipeline-workflow)
-- [Database Schema](#database-schema)
-- [API Endpoints](#api-endpoints)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Local Setup](#local-setup)
-- [Environment Variables](#environment-variables)
-- [Deployment](#deployment)
-
----
-
 ## Overview
 
 DataSentinel takes a raw CSV or Excel file through a four-stage pipeline:
