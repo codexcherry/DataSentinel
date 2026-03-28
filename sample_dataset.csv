@@ -1,0 +1,51 @@
+id,name,age,email,salary,department,join_date,performance_score,city,status
+1,John Smith,28,john.smith@email.com,55000,Engineering,2020-01-15,8.5,New York,Active
+2,Sarah Johnson,35,,72000,Marketing,2019-03-22,9.2,Los Angeles,Active
+3,Mike Williams,42,mike.williams@email.com,95000,Engineering,2018-06-10,7.8,Chicago,Active
+4,Emily Brown,29,emily.brown@email.com,,Sales,2021-02-01,8.9,Houston,Active
+5,David Lee,31,david.lee@email.com,68000,HR,2020-07-18,8.1,Phoenix,Active
+6,Lisa Garcia,38,lisa.garcia@email.com,82000,Engineering,2017-11-05,9.5,Philadelphia,Active
+7,James Martinez,45,,105000,Management,2016-04-12,8.7,San Antonio,Active
+8,Maria Rodriguez,33,maria.rodriguez@email.com,71000,Marketing,2019-09-30,8.3,San Diego,Active
+9,Robert Taylor,27,robert.taylor@email.com,52000,Sales,2021-05-20,7.5,Dallas,Active
+10,Jennifer Anderson,36,jennifer.anderson@email.com,78000,Engineering,2018-12-08,9.1,San Jose,Active
+11,Michael Thomas,41,,92000,Engineering,2017-08-15,8.4,Austin,Active
+12,Jessica White,30,jessica.white@email.com,65000,HR,2020-03-25,8.6,Jacksonville,Active
+13,Christopher Harris,34,christopher.harris@email.com,73000,Sales,2019-07-11,7.9,Fort Worth,Active
+14,Amanda Martin,39,amanda.martin@email.com,88000,Marketing,2018-02-28,9.3,Columbus,Active
+15,Daniel Thompson,26,,48000,Sales,2021-11-03,7.2,Charlotte,Active
+16,Michelle Garcia,32,michelle.garcia@email.com,69000,Engineering,2020-06-17,8.8,San Francisco,Active
+17,Matthew Martinez,44,matthew.martinez@email.com,98000,Management,2016-09-22,8.5,Indianapolis,Active
+18,Ashley Robinson,28,ashley.robinson@email.com,58000,Marketing,2020-12-10,8.2,Seattle,Active
+19,Joshua Clark,37,,85000,Engineering,2018-05-14,9.0,Denver,Active
+20,Stephanie Rodriguez,31,stephanie.rodriguez@email.com,67000,HR,2019-10-08,8.4,Washington,Active
+21,Andrew Lewis,29,andrew.lewis@email.com,61000,Sales,2021-01-19,7.7,Boston,Active
+22,Nicole Walker,35,nicole.walker@email.com,76000,Engineering,2018-11-27,8.9,El Paso,Active
+23,Ryan Hall,40,,91000,Management,2017-03-16,8.6,Nashville,Active
+24,Lauren Allen,33,lauren.allen@email.com,70000,Marketing,2019-08-05,8.3,Detroit,Active
+25,Brandon Young,27,brandon.young@email.com,54000,Sales,2021-04-22,7.4,Portland,Active
+26,Samantha King,36,samantha.king@email.com,79000,Engineering,2018-10-13,9.2,Las Vegas,Active
+27,Justin Wright,43,justin.wright@email.com,96000,Engineering,2017-06-29,8.7,Louisville,Active
+28,Brittany Lopez,30,,64000,HR,2020-02-14,8.5,Baltimore,Active
+29,Kevin Hill,34,kevin.hill@email.com,74000,Sales,2019-12-01,8.0,Milwaukee,Active
+30,Rachel Scott,38,rachel.scott@email.com,87000,Marketing,2018-07-20,9.4,Albuquerque,Active
+31,Tyler Green,25,tyler.green@email.com,45000,Sales,2022-01-10,6.8,Tucson,Active
+32,Megan Adams,32,megan.adams@email.com,68000,Engineering,2020-05-28,8.7,Fresno,Active
+33,Jason Baker,41,jason.baker@email.com,93000,Management,2017-02-09,8.8,Sacramento,Active
+34,Amber Nelson,29,,62000,Marketing,2020-11-16,8.1,Kansas City,Active
+35,Eric Carter,35,eric.carter@email.com,77000,Engineering,2019-04-03,9.0,Mesa,Active
+36,Heather Mitchell,37,heather.mitchell@email.com,84000,Engineering,2018-08-24,8.9,Atlanta,Active
+37,Brian Perez,42,brian.perez@email.com,97000,Management,2016-12-07,8.6,Omaha,Active
+38,Melissa Roberts,31,melissa.roberts@email.com,66000,HR,2020-09-11,8.3,Miami,Active
+39,Jacob Turner,28,,57000,Sales,2021-03-29,7.6,Oakland,Active
+40,Kayla Phillips,33,kayla.phillips@email.com,72000,Marketing,2019-06-18,8.4,Tulsa,Active
+41,Nicholas Campbell,39,nicholas.campbell@email.com,89000,Engineering,2018-01-31,9.1,Minneapolis,Active
+42,Victoria Parker,30,victoria.parker@email.com,63000,Sales,2020-10-23,7.8,Wichita,Active
+43,Austin Evans,36,,81000,Engineering,2019-02-15,8.8,New Orleans,Active
+44,Alexis Edwards,34,alexis.edwards@email.com,75000,Marketing,2019-11-06,8.5,Arlington,Active
+45,Jonathan Collins,40,jonathan.collins@email.com,94000,Management,2017-07-19,8.7,Bakersfield,Active
+46,Taylor Stewart,27,taylor.stewart@email.com,56000,Sales,2021-08-12,7.3,Tampa,Active
+47,Hannah Sanchez,32,hannah.sanchez@email.com,69000,Engineering,2020-04-07,8.6,Aurora,Active
+48,Zachary Morris,38,,86000,Engineering,2018-09-28,9.0,Anaheim,Active
+49,Olivia Rogers,29,olivia.rogers@email.com,60000,HR,2020-12-30,8.2,Honolulu,Active
+50,Ethan Reed,35,ethan.reed@email.com,78000,Engineering,2019-05-17,8.9,Santa Ana,Inactive

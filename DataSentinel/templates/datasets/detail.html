@@ -1,0 +1,1041 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ dataset.name }} - DataSentinel{% endblock %}
+
+{% block extra_css %}
+<style>
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.metric-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--info);
+}
+
+.metric-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.metric-unit {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+.lineage-container {
+    background: transparent;
+    padding: 0;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.lineage-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 28px;
+    position: relative;
+}
+
+.lineage-step::after {
+    content: '↓';
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.lineage-step:last-child::after {
+    display: none;
+}
+
+.lineage-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid var(--info);
+    flex-shrink: 0;
+}
+
+.lineage-content {
+    flex: 1;
+}
+
+.lineage-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    font-size: 12px;
+}
+
+.lineage-meta {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.version-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 200ms;
+}
+
+.version-card:hover {
+    border-color: var(--info);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.version-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--info);
+}
+
+.status-response {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: 1px solid;
+    animation: slideIn 300ms ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-response.success {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: var(--success);
+}
+
+.status-response.error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--error);
+}
+
+.status-response.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--warning);
+}
+
+.status-response.info {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: var(--info);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+}
+
+.status-dot.success { background: var(--success); }
+.status-dot.error { background: var(--error); }
+.status-dot.warning { background: var(--warning); }
+.status-dot.info { background: var(--info); }
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
+    50% { opacity: 0.6; box-shadow: 0 0 16px currentColor; }
+}
+
+.status-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.pipeline-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 32px;
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+    backdrop-filter: blur(15px);
+}
+
+.pipeline-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.pipeline-node {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border);
+    transition: all 250ms;
+}
+
+.pipeline-node.active {
+    border-color: var(--info);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.pipeline-node.success {
+    border-color: var(--success);
+    background: rgba(34, 197, 94, 0.1);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.4);
+}
+
+.pipeline-node.error {
+    border-color: var(--error);
+    background: rgba(239, 68, 68, 0.1);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+}
+
+.pipeline-arrow {
+    color: var(--text-muted);
+    font-size: 24px;
+}
+
+.pipeline-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.5); }
+    50% { box-shadow: 0 0 30px rgba(56, 189, 248, 0.8); }
+}
+
+.issue-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 200ms;
+    cursor: pointer;
+}
+
+.issue-card:hover {
+    border-color: var(--info);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+}
+
+.issue-card.error-issue {
+    border-left: 4px solid var(--error);
+    background: rgba(239, 68, 68, 0.05);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1);
+}
+
+.issue-card.warning-issue {
+    border-left: 4px solid var(--warning);
+    background: rgba(245, 158, 11, 0.05);
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.1);
+}
+
+.issue-card.info-issue {
+    border-left: 4px solid var(--info);
+    background: rgba(56, 189, 248, 0.05);
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.1);
+}
+
+.issue-card.hidden {
+    display: none;
+}
+
+#searchInput:focus, #issueTypeFilter:focus, #severityFilter:focus {
+    outline: none;
+    border-color: var(--info);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+.detail-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 500px;
+    height: 100vh;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border);
+    padding: 24px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 300ms;
+    z-index: 100;
+}
+
+.detail-panel.open {
+    transform: translateX(0);
+}
+
+.affected-row {
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid var(--error);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ dataset.name }}</h1>
+        <p style="color: var(--text-muted); margin-top: 8px;">{{ dataset.original_filename }} • {{ dataset.rows_count }} rows • {{ dataset.columns_count }} columns</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        {% if dataset.status == 'completed' or dataset.status == 'cleaned' %}
+        <a href="#" onclick="alert('PDF export feature coming soon!'); return false;" class="btn btn-secondary">
+            <i data-lucide="file-text" class="icon-sm"></i>
+            Export Report (PDF)
+        </a>
+        <a href="{% url 'export_dataset' dataset.id %}?format=csv" class="btn btn-success">
+            <i data-lucide="download" class="icon-sm"></i>
+            Export CSV
+        </a>
+        <a href="{% url 'export_dataset' dataset.id %}?format=excel" class="btn btn-success">
+            <i data-lucide="download" class="icon-sm"></i>
+            Export Excel
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-label">Processing Time</div>
+        <div class="metric-value">
+            {{ processing_time|default:"0.0" }}<span class="metric-unit">s</span>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Throughput</div>
+        <div class="metric-value">
+            {{ throughput|default:"0" }}<span class="metric-unit">rows/s</span>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Data Quality</div>
+        <div class="metric-value">
+            {{ data_quality_score|default:"0" }}<span class="metric-unit">%</span>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Versions</div>
+        <div class="metric-value">
+            {{ dataset.versions.count }}
+        </div>
+    </div>
+</div>
+
+<!-- Pipeline Flow -->
+<div class="pipeline-flow">
+    <div class="pipeline-stage">
+        <div class="pipeline-node {% if dataset.status == 'uploaded' or dataset.status == 'profiling' or dataset.status == 'profiled' or dataset.status == 'cleaning' or dataset.status == 'cleaned' or dataset.status == 'analyzing' or dataset.status == 'completed' %}success{% endif %}">
+            <i data-lucide="upload" class="icon-lg"></i>
+        </div>
+        <span class="pipeline-label">Upload</span>
+    </div>
+    
+    <span class="pipeline-arrow">→</span>
+    
+    <div class="pipeline-stage">
+        <div class="pipeline-node {% if dataset.status == 'profiling' %}active{% elif dataset.status == 'profiled' or dataset.status == 'cleaning' or dataset.status == 'cleaned' or dataset.status == 'analyzing' or dataset.status == 'completed' %}success{% endif %}">
+            <i data-lucide="search" class="icon-lg"></i>
+        </div>
+        <span class="pipeline-label">Profile</span>
+    </div>
+    
+    <span class="pipeline-arrow">→</span>
+    
+    <div class="pipeline-stage">
+        <div class="pipeline-node {% if dataset.status == 'cleaning' %}active{% elif dataset.status == 'cleaned' or dataset.status == 'analyzing' or dataset.status == 'completed' %}success{% endif %}">
+            <i data-lucide="filter" class="icon-lg"></i>
+        </div>
+        <span class="pipeline-label">Clean</span>
+    </div>
+    
+    <span class="pipeline-arrow">→</span>
+    
+    <div class="pipeline-stage">
+        <div class="pipeline-node {% if dataset.status == 'analyzing' %}active{% elif dataset.status == 'completed' %}success{% endif %}">
+            <i data-lucide="bar-chart-2" class="icon-lg"></i>
+        </div>
+        <span class="pipeline-label">Analyze</span>
+    </div>
+</div>
+
+<!-- Status Response Bar -->
+<div style="margin-bottom: 32px;">
+    {% if dataset.status == 'completed' %}
+    <div style="padding: 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+        <span class="status-badge success">200 Processed</span>
+        <span style="color: var(--success);">Dataset successfully processed and analyzed</span>
+    </div>
+    {% elif dataset.status == 'failed' %}
+    <div style="padding: 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+        <span class="status-badge error">500 Failed</span>
+        <span style="color: var(--error);">Processing failed. Please try again.</span>
+    </div>
+    {% elif dataset.status == 'uploaded' %}
+    <div class="status-response info">
+        <div class="status-dot info"></div>
+        <span class="status-code" style="color: var(--info);">202 Ready</span>
+        <span style="color: var(--info); flex: 1;">Dataset uploaded. Ready to profile.</span>
+        <button onclick="profileDataset()" class="btn btn-primary">
+            <i data-lucide="play" class="icon-sm"></i>
+            Start Profiling
+        </button>
+    </div>
+    {% elif dataset.status == 'profiled' %}
+    <div class="status-response warning">
+        <div class="status-dot warning"></div>
+        <span class="status-code" style="color: var(--warning);">422 Issues Found</span>
+        <span style="color: var(--warning);">{{ recommendations|length }} data quality issues detected</span>
+        <a href="#recommendations" class="btn btn-warning" style="margin-left: auto; background: var(--warning); border-color: var(--warning); color: #000;">Review Issues</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recommendations -->
+{% if recommendations %}
+<div class="card" id="recommendations">
+    <div class="card-header">
+        <h2 class="card-title">Data Quality Issues (<span id="totalIssuesCount">{{ recommendations|length }}</span>)</h2>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <button onclick="selectAllIssues()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;">
+                <i data-lucide="check-square" class="icon-sm"></i>
+                Select All
+            </button>
+            <button onclick="applySelectedIssues()" class="btn btn-success" id="applySelectedBtn" disabled>
+                <i data-lucide="play" class="icon-sm"></i>
+                Apply Selected (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+    </div>
+    
+    <!-- Search and Filter Controls -->
+    <div style="padding: 0 28px 20px 28px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+        <div>
+            <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">
+                <i data-lucide="search" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                Search Columns
+            </label>
+            <input type="text" id="searchInput" placeholder="Type column name..." 
+                   oninput="filterIssues()"
+                   style="width: 100%; padding: 10px 14px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 14px; font-family: 'Inter', sans-serif; transition: all 200ms;">
+        </div>
+        
+        <div>
+            <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">
+                <i data-lucide="filter" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                Issue Type
+            </label>
+            <select id="issueTypeFilter" onchange="filterIssues()"
+                    style="width: 100%; padding: 10px 14px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 14px; font-family: 'Inter', sans-serif; appearance: none; cursor: pointer; transition: all 200ms;">
+                <option value="">All Types</option>
+                <option value="missing">Missing Values</option>
+                <option value="duplicate">Duplicates</option>
+                <option value="outlier">Outliers</option>
+                <option value="type_mismatch">Type Mismatch</option>
+                <option value="invalid">Invalid Values</option>
+            </select>
+        </div>
+        
+        <div>
+            <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;">
+                <i data-lucide="alert-triangle" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                Severity
+            </label>
+            <select id="severityFilter" onchange="filterIssues()"
+                    style="width: 100%; padding: 10px 14px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 14px; font-family: 'Inter', sans-serif; appearance: none; cursor: pointer; transition: all 200ms;">
+                <option value="">All Severities</option>
+                <option value="1">High</option>
+                <option value="2">Medium</option>
+                <option value="3">Low</option>
+            </select>
+        </div>
+    </div>
+    
+    <div id="issuesList">
+    {% for rec in recommendations %}
+    <div class="issue-card {% if rec.priority == 1 %}error-issue{% elif rec.priority == 2 %}warning-issue{% else %}info-issue{% endif %}" 
+         data-rec-id="{{ rec.id }}"
+         data-column="{{ rec.column_name|lower }}"
+         data-issue-type="{{ rec.issue_type }}"
+         data-severity="{{ rec.priority }}"
+         data-impact="{{ rec.affected_rows|length }}">
+        <div style="display: flex; gap: 16px; align-items: start;">
+            {% if not rec.is_applied %}
+            <input type="checkbox" class="issue-checkbox" data-rec-id="{{ rec.id }}" onchange="updateSelectedCount()" 
+                   style="width: 20px; height: 20px; margin-top: 4px; cursor: pointer; accent-color: var(--success);">
+            {% else %}
+            <i data-lucide="check-circle" class="icon-md icon-success" style="margin-top: 4px;"></i>
+            {% endif %}
+            
+            <div style="flex: 1; cursor: pointer;" onclick="showIssueDetails({{ rec.id }})">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                    <span class="monospace" style="font-weight: 600; color: var(--text-primary);">{{ rec.column_name }}</span>
+                    <span class="status-badge {% if rec.priority == 1 %}error{% elif rec.priority == 2 %}warning{% else %}info{% endif %}">
+                        {{ rec.get_issue_type_display }}
+                    </span>
+                    
+                    <!-- Severity Badge -->
+                    <span class="status-badge {% if rec.priority == 1 %}error{% elif rec.priority == 2 %}warning{% else %}info{% endif %}" 
+                          style="font-size: 10px; padding: 3px 8px; text-transform: uppercase; letter-spacing: 0.8px;">
+                        <i data-lucide="{% if rec.priority == 1 %}alert-octagon{% elif rec.priority == 2 %}alert-triangle{% else %}info{% endif %}" 
+                           style="width: 10px; height: 10px; vertical-align: middle;"></i>
+                        {% if rec.priority == 1 %}HIGH{% elif rec.priority == 2 %}MEDIUM{% else %}LOW{% endif %}
+                    </span>
+                    
+                    <!-- Impact Score -->
+                    <span style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; background: rgba(56, 189, 248, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2);">
+                        Impact: {{ rec.affected_rows|length|floatformat:0 }} rows
+                    </span>
+                    
+                    {% if rec.is_applied %}
+                    <span class="status-badge success" style="font-size: 10px;">
+                        <i data-lucide="check" class="icon-sm"></i>
+                        Applied
+                    </span>
+                    {% endif %}
+                </div>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 8px;">{{ rec.issue_description }}</p>
+                <div style="display: flex; align-items: center; gap: 16px; font-size: 13px;">
+                    <span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                        <i data-lucide="alert-circle" class="icon-sm"></i>
+                        {{ rec.affected_rows|length }} rows affected
+                    </span>
+                    <span style="color: var(--info); display: flex; align-items: center; gap: 4px;">
+                        <i data-lucide="wrench" class="icon-sm"></i>
+                        {{ rec.get_recommended_action_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    
+    <!-- Failed Issues Notification -->
+    <div id="failedIssuesNotification" style="display: none; margin-top: 20px;" class="status-response error">
+        <div class="status-dot error"></div>
+        <div style="flex: 1;">
+            <span class="status-code" style="color: var(--error);">500 Cleaning Failed</span>
+            <p style="color: var(--text-secondary); margin-top: 4px; font-size: 13px;">
+                The following issues could not be resolved after 10 attempts:
+            </p>
+            <ul id="failedIssuesList" style="margin-top: 8px; color: var(--error); font-size: 13px;"></ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Data Lineage -->
+{% if cleaning_logs %}
+<div class="card" style="margin-top: 48px;">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i data-lucide="git-branch" class="icon-md"></i>
+            Data Lineage
+        </h2>
+        <span class="section-label">Transformation History</span>
+    </div>
+    <div class="lineage-container">
+        <div class="lineage-step">
+            <div class="lineage-icon">
+                <i data-lucide="database" style="width: 14px; height: 14px; color: var(--info);"></i>
+            </div>
+            <div class="lineage-content">
+                <div class="lineage-title">Raw Dataset Uploaded</div>
+                <div class="lineage-meta">{{ dataset.rows_count }} rows × {{ dataset.columns_count }} cols • {{ dataset.created_at|date:"M d, H:i" }}</div>
+            </div>
+        </div>
+        
+        {% for log in cleaning_logs %}
+        <div class="lineage-step" style="{% if log.status != 'success' %}background: rgba(239, 68, 68, 0.08); border-color: var(--error);{% endif %}">
+            <div class="lineage-icon" style="{% if log.status != 'success' %}background: rgba(239, 68, 68, 0.15); border-color: var(--error);{% endif %}">
+                <i data-lucide="{% if log.status == 'success' %}check{% else %}x{% endif %}" style="width: 14px; height: 14px; color: {% if log.status == 'success' %}var(--success){% else %}var(--error){% endif %};"></i>
+            </div>
+            <div class="lineage-content">
+                <div class="lineage-title">{{ log.action_taken|title }} → {{ log.column_name }}</div>
+                <div class="lineage-meta">
+                    {{ log.rows_affected }} rows • {{ log.execution_time|floatformat:2 }}s • 
+                    <span style="color: {% if log.status == 'success' %}var(--success){% else %}var(--error){% endif %};">{{ log.status|upper }}</span>
+                </div>
+            </div>
+            <div style="margin-left: auto;">
+                <span class="status-badge {% if log.status == 'success' %}success{% else %}error{% endif %}" style="font-size: 9px; padding: 3px 6px;">
+                    {% if log.status == 'success' %}200{% else %}500{% endif %}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if dataset.status == 'completed' or dataset.status == 'cleaned' %}
+        <div class="lineage-step">
+            <div class="lineage-icon">
+                <i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--success);"></i>
+            </div>
+            <div class="lineage-content">
+                <div class="lineage-title">Cleaned Dataset Ready</div>
+                <div class="lineage-meta">{{ dataset.rows_count }} rows × {{ dataset.columns_count }} cols • Ready for analysis</div>
+            </div>
+            <div style="margin-left: auto;">
+                <a href="{% url 'export_dataset' dataset.id %}?format=csv" class="btn btn-success" style="padding: 4px 10px; font-size: 11px;">
+                    <i data-lucide="download" style="width: 12px; height: 12px;"></i>
+                    Download
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Cleaning Logs -->
+{% if cleaning_logs %}
+<div class="card" style="margin-top: 48px;">
+    <div class="card-header">
+        <h2 class="card-title">Cleaning History</h2>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Column</th>
+                    <th>Rows Affected</th>
+                    <th>Applied By</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in cleaning_logs %}
+                <tr>
+                    <td style="color: var(--success);">{{ log.action_taken }}</td>
+                    <td>{{ log.column_name }}</td>
+                    <td>{{ log.rows_affected }}</td>
+                    <td>{{ log.applied_by.username }}</td>
+                    <td>{{ log.applied_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Version History -->
+{% if dataset.versions.all %}
+<div class="card" style="margin-top: 48px;">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i data-lucide="git-commit" class="icon-md"></i>
+            Version History
+        </h2>
+        <span class="section-label">{{ dataset.versions.count }} Version{{ dataset.versions.count|pluralize }}</span>
+    </div>
+    
+    <div style="padding: 0 28px 28px 28px;">
+        {% for version in dataset.versions.all %}
+        <div class="version-card">
+            <div class="version-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="version-badge">v{{ version.version_number }}</span>
+                    <span style="color: var(--text-muted); font-size: 13px;">
+                        {{ version.rows_count }} rows × {{ version.columns_count }} cols
+                    </span>
+                </div>
+                <span style="color: var(--text-muted); font-size: 12px; font-family: 'JetBrains Mono', monospace;">
+                    {{ version.created_at|date:"M d, Y H:i" }}
+                </span>
+            </div>
+            
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px;">
+                {{ version.description }}
+            </p>
+            
+            <div style="display: flex; gap: 8px;">
+                <a href="{{ version.file_path.url }}" download class="btn btn-secondary" style="padding: 6px 14px; font-size: 12px;">
+                    <i data-lucide="download" class="icon-sm"></i>
+                    Download
+                </a>
+                <button onclick="compareVersions({{ version.version_number }})" class="btn btn-secondary" style="padding: 6px 14px; font-size: 12px;">
+                    <i data-lucide="git-compare" class="icon-sm"></i>
+                    Compare
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Analyses -->
+{% if analyses %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Analysis Results</h2>
+        <a href="{% url 'analyze_dataset' dataset.id %}" class="btn btn-primary">Run Full Analysis</a>
+    </div>
+    
+    {% for analysis in analyses %}
+    <div style="margin-bottom: 24px;">
+        <h3 style="color: var(--text-primary); margin-bottom: 16px;">{{ analysis.get_analysis_type_display }}</h3>
+        
+        {% if analysis.visualizations %}
+        <div id="chart-{{ analysis.id }}"></div>
+        <script>
+            Plotly.newPlot('chart-{{ analysis.id }}', {{ analysis.visualizations.chart|safe }});
+        </script>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+{% if dataset.status == 'profiled' or dataset.status == 'cleaned' or dataset.status == 'completed' %}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px; margin-bottom: 32px;">
+    <!-- Analysis Card -->
+    <div class="card">
+        <div style="padding: 32px;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                <i data-lucide="bar-chart-2" style="width: 48px; height: 48px; color: var(--info);"></i>
+                <div>
+                    <h3 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Ready to Analyze</h3>
+                    <p style="color: var(--text-muted); font-size: 13px;">Run comprehensive analysis on your cleaned dataset</p>
+                </div>
+            </div>
+            <a href="{% url 'analyze_dataset' dataset.id %}" class="btn btn-primary" style="width: 100%;">
+                <i data-lucide="play" class="icon-sm"></i>
+                Run Analysis
+            </a>
+        </div>
+    </div>
+    
+    <!-- Download Card -->
+    <div class="card">
+        <div style="padding: 32px;">
+            <h3 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Download Dataset</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Export your cleaned data in multiple formats</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="{% url 'export_dataset' dataset.id %}?format=csv" class="btn btn-success" style="width: 100%;">
+                    <i data-lucide="download" class="icon-sm"></i>
+                    CSV Format
+                </a>
+                <a href="{% url 'export_dataset' dataset.id %}?format=excel" class="btn btn-success" style="width: 100%;">
+                    <i data-lucide="download" class="icon-sm"></i>
+                    Excel Format
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- Detail Panel -->
+<div id="detailPanel" class="detail-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="font-size: 20px; font-weight: 600;">Issue Details</h2>
+        <button onclick="closeDetailPanel()" style="background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer;">&times;</button>
+    </div>
+    <div id="detailContent">
+        <div class="loading"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+<script>
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+
+async function profileDataset() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Profiling...';
+    
+    try {
+        const response = await fetch('{% url "profile_dataset" dataset.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Profiling failed. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Start Profiling';
+        }
+    } catch (error) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Start Profiling';
+    }
+}
+
+async function showIssueDetails(recId) {
+    const panel = document.getElementById('detailPanel');
+    const content = document.getElementById('detailContent');
+    
+    panel.classList.add('open');
+    content.innerHTML = '<div class="loading"></div>';
+    
+    try {
+        const response = await fetch(`/recommendations/${recId}/details/`);
+        const data = await response.json();
+        
+        let html = `
+            <div style="margin-bottom: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 8px;">${data.recommendation.column_name}</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">${data.recommendation.issue_description}</p>
+                <div style="padding: 12px; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--info); border-radius: 8px;">
+                    <strong style="color: var(--info);">Recommended:</strong> ${data.recommendation.recommended_action}
+                </div>
+            </div>
+            
+            <h4 style="color: var(--text-primary); margin-bottom: 16px;">Affected Rows (${data.total_affected} total, showing first 50)</h4>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Row #</th>
+                            ${Object.keys(data.affected_data[0] || {}).map(col => `<th>${col}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.affected_data.map((row, idx) => `
+                            <tr class="affected-row">
+                                <td>${data.affected_rows[idx]}</td>
+                                ${Object.values(row).map(val => `<td>${val === null ? '<em style="color: var(--error);">NULL</em>' : val}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        content.innerHTML = html;
+    } catch (error) {
+        content.innerHTML = '<p style="color: var(--error);">Failed to load details</p>';
+    }
+}
+
+function closeDetailPanel() {
+    document.getElementById('detailPanel').classList.remove('open');
+}
+
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.issue-checkbox:checked');
+    const count = checkboxes.length;
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('applySelectedBtn').disabled = count === 0;
+}
+
+function selectAllIssues() {
+    // Only select visible (not filtered out) checkboxes
+    const checkboxes = document.querySelectorAll('.issue-card:not(.hidden) .issue-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => cb.checked = !allChecked);
+    updateSelectedCount();
+}
+
+function filterIssues() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const issueType = document.getElementById('issueTypeFilter').value;
+    const severity = document.getElementById('severityFilter').value;
+    
+    const issueCards = document.querySelectorAll('.issue-card');
+    let visibleCount = 0;
+    
+    issueCards.forEach(card => {
+        const columnName = card.dataset.column || '';
+        const cardIssueType = card.dataset.issueType || '';
+        const cardSeverity = card.dataset.severity || '';
+        
+        // Check all filter conditions
+        const matchesSearch = columnName.includes(searchTerm);
+        const matchesType = !issueType || cardIssueType === issueType;
+        const matchesSeverity = !severity || cardSeverity === severity;
+        
+        // Show card only if all conditions match
+        if (matchesSearch && matchesType && matchesSeverity) {
+            card.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+    
+    // Update total count display
+    document.getElementById('totalIssuesCount').textContent = visibleCount;
+    
+    // Reinitialize Lucide icons for newly visible cards
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+async function applySelectedIssues() {
+    const checkboxes = document.querySelectorAll('.issue-checkbox:checked');
+    if (checkboxes.length === 0) return;
+    
+    if (!confirm(`Apply ${checkboxes.length} cleaning action(s)? This will modify your dataset.`)) return;
+    
+    const btn = document.getElementById('applySelectedBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader" class="icon-sm"></i> Processing...';
+    
+    const recIds = Array.from(checkboxes).map(cb => cb.dataset.recId);
+    
+    try {
+        const response = await fetch(`/datasets/{{ dataset.id }}/apply-batch/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ recommendation_ids: recIds })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Show failed issues if any
+            if (data.failed && data.failed.length > 0) {
+                const failedDiv = document.getElementById('failedIssuesNotification');
+                const failedList = document.getElementById('failedIssuesList');
+                failedList.innerHTML = '';
+                data.failed.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = `${item.column} - ${item.reason}`;
+                    failedList.appendChild(li);
+                });
+                failedDiv.style.display = 'flex';
+            }
+            
+            // Reload to show updated state
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            alert('Failed to apply cleaning actions');
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="play" class="icon-sm"></i> Apply Selected (<span id="selectedCount">' + recIds.length + '</span>)';
+        }
+    } catch (error) {
+        alert('Network error');
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="play" class="icon-sm"></i> Apply Selected (<span id="selectedCount">' + recIds.length + '</span>)';
+    }
+}
+
+async function applyCleaningAction(recId) {
+    if (!confirm('Apply this cleaning action? This will modify your dataset.')) return;
+    
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span>';
+    
+    try {
+        const response = await fetch(`/recommendations/${recId}/apply/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Failed to apply cleaning action');
+            btn.disabled = false;
+            btn.textContent = 'Apply Fix';
+        }
+    } catch (error) {
+        alert('Network error');
+        btn.disabled = false;
+        btn.textContent = 'Apply Fix';
+    }
+}
+
+function compareVersions(versionNumber) {
+    alert(`Version comparison feature coming soon!\nYou selected v${versionNumber}`);
+}
+</script>
+{% endblock %}

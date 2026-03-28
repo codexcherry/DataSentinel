@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+
+{% block title %}Analysis - {{ dataset.name }} - DataSentinel{% endblock %}
+
+{% block extra_css %}
+<style>
+.pipeline-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 32px;
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+    backdrop-filter: blur(15px);
+}
+
+.pipeline-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.pipeline-node {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border);
+    transition: all 250ms;
+}
+
+.pipeline-node.success {
+    border-color: var(--success);
+    background: rgba(34, 197, 94, 0.1);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.4);
+}
+
+.pipeline-arrow {
+    color: var(--text-muted);
+    font-size: 24px;
+}
+
+.pipeline-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card {
+    margin-bottom: 32px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Analysis Results</h1>
+        <p style="color: var(--text-muted); margin-top: 8px;">{{ dataset.name }}</p>
+    </div>
+    <a href="{% url 'dataset_detail' dataset.id %}" class="btn btn-secondary">
+        <i data-lucide="arrow-left" class="icon-sm"></i>
+        Back to Dataset
+    </a>
+</div>
+
+<!-- Pipeline Flow -->
+<div class="pipeline-flow">
+    <div class="pipeline-stage">
+        <div class="pipeline-node success">
+            <i data-lucide="upload" class="icon-lg"></i>
+        </div>
+        <span class="pipeline-label">Upload</span>
+    </div>
+    
+    <span class="pipeline-arrow">→</span>
+    
+    <div class="pipeline-stage">
+        <div class="pipeline-node success">
+            <i data-lucide="search" class="icon-lg"></i>
+        </div>
+        <span class="pipeline-label">Profile</span>
+    </div>
+    
+    <span class="pipeline-arrow">→</span>
+    
+    <div class="pipeline-stage">
+        <div class="pipeline-node success">
+            <i data-lucide="filter" class="icon-lg"></i>
+        </div>
+        <span class="pipeline-label">Clean</span>
+    </div>
+    
+    <span class="pipeline-arrow">→</span>
+    
+    <div class="pipeline-stage">
+        <div class="pipeline-node success">
+            <i data-lucide="bar-chart-2" class="icon-lg"></i>
+        </div>
+        <span class="pipeline-label">Analyze</span>
+    </div>
+</div>
+
+<!-- KPIs -->
+{% if kpis %}
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+    {% for key, kpi in kpis.items %}
+    <div class="card" style="margin-bottom: 0;">
+        <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 8px; text-transform: uppercase;">{{ kpi.label }}</div>
+        <div style="font-size: 28px; font-weight: 700; color: var(--success);">
+            {% if kpi.format == 'currency' %}
+            ${{ kpi.value|floatformat:2 }}
+            {% elif kpi.format == 'percentage' %}
+            {{ kpi.value|floatformat:1 }}%
+            {% else %}
+            {{ kpi.value|floatformat:0 }}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Summary Statistics -->
+{% if summary %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Summary Statistics</h2>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div>
+            <div style="color: var(--text-muted); font-size: 13px;">Total Rows</div>
+            <div style="font-size: 24px; font-weight: 600; color: var(--text-primary);">{{ summary.overview.total_rows }}</div>
+        </div>
+        <div>
+            <div style="color: var(--text-muted); font-size: 13px;">Total Columns</div>
+            <div style="font-size: 24px; font-weight: 600; color: var(--text-primary);">{{ summary.overview.total_columns }}</div>
+        </div>
+        <div>
+            <div style="color: var(--text-muted); font-size: 13px;">Memory Usage</div>
+            <div style="font-size: 24px; font-weight: 600; color: var(--text-primary);">{{ summary.overview.memory_usage|floatformat:2 }} MB</div>
+        </div>
+        <div>
+            <div style="color: var(--text-muted); font-size: 13px;">Duplicates</div>
+            <div style="font-size: 24px; font-weight: 600; color: {% if summary.overview.duplicate_rows > 0 %}var(--warning){% else %}var(--success){% endif %};">{{ summary.overview.duplicate_rows }}</div>
+        </div>
+    </div>
+    
+    <h3 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">Numeric Columns</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Column</th>
+                    <th>Count</th>
+                    <th>Mean</th>
+                    <th>Std</th>
+                    <th>Min</th>
+                    <th>25%</th>
+                    <th>Median</th>
+                    <th>75%</th>
+                    <th>Max</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for col, stats in summary.numeric_summary.items %}
+                <tr>
+                    <td style="color: var(--text-primary); font-weight: 500;">{{ col }}</td>
+                    <td>{{ stats.count }}</td>
+                    <td>{{ stats.mean|floatformat:2 }}</td>
+                    <td>{{ stats.std|floatformat:2 }}</td>
+                    <td>{{ stats.min|floatformat:2 }}</td>
+                    <td>{{ stats.q25|floatformat:2 }}</td>
+                    <td>{{ stats.median|floatformat:2 }}</td>
+                    <td>{{ stats.q75|floatformat:2 }}</td>
+                    <td>{{ stats.max|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Custom Visualization Builder -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Create Custom Visualization</h2>
+    </div>
+    
+    <div style="background: #0F172A; border: 1px solid #1F2937; border-radius: 16px; padding: 28px; box-shadow: 0 0 20px rgba(56,189,248,0.08);">
+        <form id="vizForm">
+            <!-- Column Selection Row -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                <div>
+                    <label style="display: block; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 13px; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.3px;">X Column</label>
+                    <select name="x_column" id="xColumn" required onchange="updateChartTypes()" style="width: 100%; height: 48px; background: #111827; color: #E5E7EB; border: 1px solid #1F2937; border-radius: 12px; padding: 0 14px; font-size: 14px; font-family: 'Inter', sans-serif; appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg width=%2712%27 height=%278%27 viewBox=%270 0 12 8%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath d=%27M1 1.5L6 6.5L11 1.5%27 stroke=%27%236B7280%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; transition: all 200ms;">
+                        <option value="">Select X Column</option>
+                        {% for col in dataset.profile.column_info.keys %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 13px; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.3px;">Y Column (optional)</label>
+                    <select name="y_column" id="yColumn" onchange="updateChartTypes()" style="width: 100%; height: 48px; background: #111827; color: #E5E7EB; border: 1px solid #1F2937; border-radius: 12px; padding: 0 14px; font-size: 14px; font-family: 'Inter', sans-serif; appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg width=%2712%27 height=%278%27 viewBox=%270 0 12 8%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath d=%27M1 1.5L6 6.5L11 1.5%27 stroke=%27%236B7280%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; transition: all 200ms;">
+                        <option value="">None</option>
+                        {% for col in dataset.profile.column_info.keys %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 13px; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.3px;">Color By (optional)</label>
+                    <select name="color_column" id="colorColumn" onchange="updateChartTypes()" style="width: 100%; height: 48px; background: #111827; color: #E5E7EB; border: 1px solid #1F2937; border-radius: 12px; padding: 0 14px; font-size: 14px; font-family: 'Inter', sans-serif; appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg width=%2712%27 height=%278%27 viewBox=%270 0 12 8%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath d=%27M1 1.5L6 6.5L11 1.5%27 stroke=%27%236B7280%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; transition: all 200ms;">
+                        <option value="">None</option>
+                        {% for col in dataset.profile.column_info.keys %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Chart Type & Generate Row -->
+            <div id="chartTypeSection" style="display: none;">
+                <div>
+                    <label style="display: block; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 13px; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.3px;">Chart Type</label>
+                    <select name="chart_type" id="chartType" required style="width: 100%; height: 48px; background: #111827; color: #E5E7EB; border: 1px solid #1F2937; border-radius: 12px; padding: 0 14px; font-size: 14px; font-family: 'Inter', sans-serif; appearance: none; cursor: pointer; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg width=%2712%27 height=%278%27 viewBox=%270 0 12 8%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath d=%27M1 1.5L6 6.5L11 1.5%27 stroke=%27%236B7280%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; transition: all 200ms;">
+                        <option value="">Select Chart Type</option>
+                    </select>
+                    <p id="chartTypeHint" style="font-size: 12px; color: #6B7280; margin-top: 6px; font-family: 'Inter', sans-serif; min-height: 18px;"></p>
+                </div>
+                
+                <button type="submit" style="width: 100%; height: 48px; background: #38BDF8; color: #0B0F19; border: none; border-radius: 12px; padding: 0 22px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; box-shadow: 0 0 12px rgba(56,189,248,0.4); transition: all 200ms;">
+                    <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+                    Generate Chart
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div id="customChart" style="min-height: 400px; margin-top: 24px;"></div>
+</div>
+
+<style>
+/* Focus states for inputs */
+#vizForm select:focus {
+    outline: none;
+    border-color: #38BDF8;
+    box-shadow: 0 0 8px rgba(56,189,248,0.4);
+}
+
+/* Hover state for button */
+#vizForm button[type="submit"]:hover {
+    box-shadow: 0 0 20px rgba(56,189,248,0.6);
+    transform: translateY(-1px);
+}
+
+#vizForm button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+#vizForm button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+<script>
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+
+// Chart type configurations
+const chartTypes = {
+    histogram: { label: 'Histogram', requires: ['x'], hint: 'Distribution of a single column' },
+    bar: { label: 'Bar Chart', requires: ['x'], hint: 'Compare categories or show distribution' },
+    pie: { label: 'Pie Chart', requires: ['x'], hint: 'Show proportions of categories' },
+    line: { label: 'Line Chart', requires: ['x', 'y'], hint: 'Show trends over time or continuous data' },
+    scatter: { label: 'Scatter Plot', requires: ['x', 'y'], hint: 'Show relationship between two variables' },
+    box: { label: 'Box Plot', requires: ['x', 'y'], hint: 'Show distribution and outliers' }
+};
+
+function updateChartTypes() {
+    const xCol = document.getElementById('xColumn').value;
+    const yCol = document.getElementById('yColumn').value;
+    const chartTypeSelect = document.getElementById('chartType');
+    const chartTypeSection = document.getElementById('chartTypeSection');
+    const chartTypeHint = document.getElementById('chartTypeHint');
+    
+    // Clear existing options
+    chartTypeSelect.innerHTML = '<option value="">Select Chart Type</option>';
+    
+    if (!xCol) {
+        chartTypeSection.style.display = 'none';
+        return;
+    }
+    
+    // Show chart type section
+    chartTypeSection.style.display = 'block';
+    
+    // Determine which chart types are valid
+    const hasY = yCol !== '';
+    
+    Object.entries(chartTypes).forEach(([type, config]) => {
+        const requiresY = config.requires.includes('y');
+        
+        // Show chart type if requirements are met
+        if (!requiresY || (requiresY && hasY)) {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = config.label;
+            chartTypeSelect.appendChild(option);
+        }
+    });
+    
+    // Update hint when chart type changes
+    chartTypeSelect.onchange = function() {
+        const selectedType = this.value;
+        if (selectedType && chartTypes[selectedType]) {
+            chartTypeHint.textContent = chartTypes[selectedType].hint;
+        } else {
+            chartTypeHint.textContent = '';
+        }
+    };
+}
+
+document.getElementById('vizForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const btn = e.target.querySelector('button[type="submit"]');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader" class="icon-sm"></i> Generating...';
+    lucide.createIcons();
+    
+    try {
+        const response = await fetch('{% url "create_visualization" dataset.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.chart) {
+            Plotly.newPlot('customChart', data.chart.data, data.chart.layout || {
+                paper_bgcolor: '#0B0F19',
+                plot_bgcolor: '#111827',
+                font: { color: '#E5E7EB' }
+            });
+        } else {
+            alert(data.error || 'Failed to generate chart');
+        }
+        
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="play" class="icon-sm"></i> Generate Chart';
+        lucide.createIcons();
+    } catch (error) {
+        alert('Network error');
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="play" class="icon-sm"></i> Generate Chart';
+        lucide.createIcons();
+    }
+});
+</script>
+{% endblock %}

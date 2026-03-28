@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - DataSentinel{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="loadSampleDataset()" class="btn btn-secondary">
+            <i data-lucide="sparkles" class="icon-sm"></i>
+            Try with Sample Data
+        </button>
+        <a href="{% url 'datasets_list' %}" class="btn btn-primary">
+            <i data-lucide="upload" class="icon-sm"></i>
+            Upload Dataset
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 32px;">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div class="metric-label">Total Datasets</div>
+                <div class="metric-value" style="color: var(--info);">{{ total_datasets }}</div>
+            </div>
+            <i data-lucide="database" class="icon-lg icon-info"></i>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div class="metric-label">Completed</div>
+                <div class="metric-value neon-number">{{ completed_datasets }}</div>
+            </div>
+            <i data-lucide="check-circle" class="icon-lg icon-success"></i>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div class="metric-label">Failed</div>
+                <div class="metric-value" style="color: var(--error);">{{ failed_datasets }}</div>
+            </div>
+            <i data-lucide="x-circle" class="icon-lg icon-error"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Datasets -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Recent Datasets</h2>
+        <a href="{% url 'datasets_list' %}" style="color: var(--info); text-decoration: none; font-size: 14px;">View All →</a>
+    </div>
+    
+    {% if datasets %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Rows</th>
+                    <th>Columns</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dataset in datasets|slice:":5" %}
+                <tr>
+                    <td style="color: var(--text-primary); font-weight: 500;">{{ dataset.name }}</td>
+                    <td>{{ dataset.rows_count|default:"—" }}</td>
+                    <td>{{ dataset.columns_count|default:"—" }}</td>
+                    <td>
+                        {% if dataset.status == 'completed' %}
+                        <span class="status-badge success">{{ dataset.status }}</span>
+                        {% elif dataset.status == 'failed' %}
+                        <span class="status-badge error">{{ dataset.status }}</span>
+                        {% elif dataset.status == 'profiling' or dataset.status == 'cleaning' or dataset.status == 'analyzing' %}
+                        <span class="status-badge warning">{{ dataset.status }}</span>
+                        {% else %}
+                        <span class="status-badge info">{{ dataset.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ dataset.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <a href="{% url 'dataset_detail' dataset.id %}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+        <i data-lucide="folder-open" style="width: 64px; height: 64px; margin-bottom: 16px; color: var(--text-muted);"></i>
+        <p style="font-size: 16px; margin-bottom: 8px;">No datasets yet</p>
+        <p style="font-size: 14px; margin-bottom: 24px;">Get started by trying our sample dataset or upload your own</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button onclick="loadSampleDataset()" class="btn btn-secondary">
+                <i data-lucide="sparkles" class="icon-sm"></i>
+                Try Sample Data
+            </button>
+            <a href="{% url 'datasets_list' %}" class="btn btn-primary">
+                <i data-lucide="upload" class="icon-sm"></i>
+                Upload Dataset
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+
+async function loadSampleDataset() {
+    const btn = event.target;
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Loading...';
+    
+    try {
+        const response = await fetch('{% url "load_sample_dataset" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Redirect to the dataset detail page
+            window.location.href = `/datasets/${data.dataset_id}/`;
+        } else {
+            alert(data.error || 'Failed to load sample dataset');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    } catch (error) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - DataSentinel{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div style="text-align: center; margin: 60px auto 40px; max-width: 600px;">
+    <div style="display: inline-flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <i data-lucide="shield-check" style="width: 48px; height: 48px; color: var(--info);"></i>
+        <h1 style="font-size: 42px; font-weight: 700; background: linear-gradient(135deg, var(--info) 0%, var(--success) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">DataSentinel</h1>
+    </div>
+    <p style="font-size: 14px; color: var(--text-muted); max-width: 480px; margin: 0 auto;">Automated data profiling, intelligent cleaning, and comprehensive analysis for production-grade data pipelines</p>
+</div>
+
+<div style="max-width: 400px; margin: 0 auto;">
+    <div class="card">
+        <h2 style="text-align: center; margin-bottom: 24px; color: var(--text-primary); font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Create Account</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <small style="color: var(--error);">{{ form.username.errors.0 }}</small>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="id_password1">Password</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                <small style="color: var(--error);">{{ form.password1.errors.0 }}</small>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="id_password2">Confirm Password</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                <small style="color: var(--error);">{{ form.password2.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            {% if form.non_field_errors %}
+            <div style="padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 8px; margin-bottom: 16px; color: var(--error);">
+                {{ form.non_field_errors.0 }}
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 16px;">Create Account</button>
+        </form>
+        
+        <p style="text-align: center; color: var(--text-muted);">
+            Already have an account? <a href="{% url 'login' %}" style="color: var(--info);">Sign In</a>
+        </p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+{% endblock %}
