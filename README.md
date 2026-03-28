@@ -351,7 +351,7 @@ AuditLog
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/datasentinel.git
+https://github.com/codexcherry/DataSentinel.git
 cd datasentinel
 
 # 2. Create and activate virtual environment
